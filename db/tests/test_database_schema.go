@@ -11,7 +11,7 @@ const (
 )
 
 var (
-	testDB *sqlx.DB
+	TestDB *sqlx.DB
 	schema = `
 DROP DATABASE IF EXISTS marauders_test;
 CREATE DATABASE marauders_test;
@@ -133,12 +133,11 @@ CREATE TABLE cloak_invite_links (
 )
 
 func init() {
-	testDB = sqlx.MustConnect(
+	TestDB = sqlx.MustConnect(
 		"mysql",
 		"mcctor:@lienmwanga01@(localhost:3306)/?multiStatements=True")
-	testDB.MustExec(schema)
+	TestDB.MustExec(schema)
 
 	// use declared methods against the mock database instead of the actual one
-	db.ChangeDB(testDB)
+	db.ChangeDB(TestDB)
 }
-
