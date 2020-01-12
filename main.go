@@ -6,15 +6,12 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	_ "github.com/mcctor/marauders/db"
 	"github.com/mcctor/marauders/http"
+	_ "github.com/mcctor/marauders/http/users/handlers"
 )
 
-func startServer() {
-	log.Println("Started server at port: 8080 ...")
+func main() {
+	log.Println("Started Marauders server at port 8080 ...")
 	if err := http.Server.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func main() {
-	startServer()
 }
