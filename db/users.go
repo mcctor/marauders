@@ -121,11 +121,33 @@ func (u *User) String() string {
 
 // GetUsers fetches all the user rows from the database.
 func GetUsers(lim int) (allUsers []*User, err error) {
-	err = db.Select(&allUsers, "SELECT * FROM users LIMIT ?", lim)
+	err = db.Select(&allUsers, "SELECT * FROM users ORDER BY created DESC LIMIT ?", lim)
 	if err != nil {
 		return allUsers, fmt.Errorf("failed to fetch all users: %v", err)
 	}
 	return allUsers, nil
+}
+
+// GetUsersByPage takes in an integer representing the current page,
+// then returns a list of users for that particular page
+func GetUsersByPage(curPage, resultPerPage int) (pageUsers []*User, err error) {
+	from := curPage * resultPerPage
+
+	err = db.Select(&pageUsers, "SELECT * FROM users LIMIT ?, ?", from, resultPerPage)
+	if err != nil {
+		return pageUsers, fmt.Errorf("failed to fetch paginated list of users: %v", err)
+	}
+	return pageUsers, nil
+}
+
+// AllUserCount returns the number of users currently recorded in the
+// database
+func AllUserCount() (count int, err error) {
+	err = db.Get(&count, "SELECT COUNT(username) FROM users")
+	if err != nil {
+		return count, fmt.Errorf("failed to count number of users: %v", err)
+	}
+	return count, nil
 }
 
 // NewUser creates a new User struct and saves it to the user table.
