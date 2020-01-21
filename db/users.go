@@ -140,16 +140,6 @@ func GetUsersByPage(curPage, resultPerPage int) (pageUsers []*User, err error) {
 	return pageUsers, nil
 }
 
-// AllUserCount returns the number of users currently recorded in the
-// database
-func AllUserCount() (count int, err error) {
-	err = db.Get(&count, "SELECT COUNT(username) FROM users")
-	if err != nil {
-		return count, fmt.Errorf("failed to count number of users: %v", err)
-	}
-	return count, nil
-}
-
 // NewUser creates a new User struct and saves it to the user table.
 func NewUser(username, email string) (*User, error) {
 	newUser := &User{
