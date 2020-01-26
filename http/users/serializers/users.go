@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+
 	"github.com/mcctor/marauders/db"
 	"github.com/mcctor/marauders/http"
 	"github.com/mcctor/marauders/utils"
 )
 
 const (
-	version        = "1.0"
 	resultsPerPage = 10
 	firstPage      = 1
 )
@@ -39,7 +39,7 @@ func userCollectionSerializer(collection utils.Collection) ([]byte, error) {
 func newUserCollection(userItems []*db.User, curPage int) (collection utils.Collection) {
 	collection = utils.Collection{
 		Collection: utils.ItemsCollection{
-			Version:  version,
+			Version:  utils.CollectionVersion,
 			Href:     href,
 			Items:    serializeUserItems(userItems),
 			Links:    userCollectionPaginationLinks(curPage),
@@ -78,16 +78,17 @@ func userCollectionPaginationLinks(curPage int) (links []utils.CollectionLink) {
 	nextPageNum := curPage + 1
 	prevPageNum := curPage - 1
 	resultOffset := curPage * resultsPerPage
+	isLastPage := hasReachedLastPage(resultOffset)
 
-	if curPage == firstPage && hasReachedLastPage(resultOffset) {
-		return
+	if curPage == firstPage && isLastPage {
+		return []utils.CollectionLink{}
 	} else if curPage == firstPage {
 		firstPageLink := utils.CollectionLink{Href: fmt.Sprintf(href+"page/%d/", nextPageNum), Rel: "next", Render: "link"}
 		links = append(links, firstPageLink)
 		return
 	}
 
-	if hasReachedLastPage(resultOffset) {
+	if isLastPage {
 		lastPageLink := utils.CollectionLink{Href: fmt.Sprintf(href+"page/%d/", prevPageNum), Rel: "prev", Render: "link"}
 		links = append(links, lastPageLink)
 		return

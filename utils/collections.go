@@ -1,5 +1,7 @@
 package utils
 
+const CollectionVersion = "1.0"
+
 type Collection struct {
 	Collection ItemsCollection `json:"collection"`
 }

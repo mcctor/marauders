@@ -8,9 +8,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var Server *http.Server
-var Router *mux.Router
-var ServerAddr string
+var (
+	Server     *http.Server
+	Router     *mux.Router
+	ServerAddr string
+)
 
 func init() {
 	// create and apply middleware to root router
