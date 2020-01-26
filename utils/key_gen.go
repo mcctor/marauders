@@ -15,11 +15,11 @@ func GenerateKey(length int) string {
 
 	for i := 0; i < length; i++ {
 		rand.Seed(time.Now().UnixNano())
-		randIndex := rand.Int() % (len(ASCII) - 1)
+		randIndex := rand.Int() % (len(Ascii) - 1)
 		makeLower := NewBoolGen().RandBool()
 
 		// could be a letter or a string digit
-		randChar := string(ASCII[randIndex])
+		randChar := string(Ascii[randIndex])
 		if makeLower {
 			char := randChar[0]
 			if !unicode.IsDigit(rune(char)) {

@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -138,6 +139,16 @@ func GetUsersByPage(curPage, resultPerPage int) (pageUsers []*User, err error) {
 		return pageUsers, fmt.Errorf("failed to fetch paginated list of users: %v", err)
 	}
 	return pageUsers, nil
+}
+
+// UserCount returns the number of users currently saved in the database
+func UserCount() int {
+	var num int
+	err := db.Get(&num, "SELECT COUNT(username) FROM users")
+	if err != nil {
+		log.Fatalf("failed to get user count: %v", err)
+	}
+	return num
 }
 
 // NewUser creates a new User struct and saves it to the user table.

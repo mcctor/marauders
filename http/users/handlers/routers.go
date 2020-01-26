@@ -11,7 +11,7 @@ func init() {
 	// associate endpoints to new sub-router with its own permissions
 	// middleware
 	usersRouter := marauderhttp.Router.PathPrefix("/v1/users").Subrouter()
-	usersRouter.HandleFunc("/{username}/", user).
+	usersRouter.HandleFunc("/{username}/", users).
 		Methods("GET", "PUT", "DELETE")
 
 	usersRouter.HandleFunc("/{username}/billings/", userBillings).
