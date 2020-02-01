@@ -4,26 +4,24 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	userConst "github.com/mcctor/marauders/http/users"
 
 	"github.com/mcctor/marauders/db"
-	"github.com/mcctor/marauders/http"
 	"github.com/mcctor/marauders/utils"
 )
 
-const (
-	resultsPerPage = 10
-	firstPage      = 1
-)
-
-var href = http.ServerAddr + "/v1/users/"
-
 func PaginatedUserItemsSerializer(curPage int) ([]byte, error) {
 	actualPage := curPage - 1 // has to do with SQL's LIMIT's offset starting at 0
-	users, err := db.GetUsersByPage(actualPage, resultsPerPage)
+	users, err := db.GetUsersByPage(actualPage, userConst.ResultsPerPage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to paginate user items: %v", err)
 	}
-	return userCollectionSerializer(newUserCollection(users, curPage))
+	return userCollectionSerializer(newUsersCollection(users, curPage))
+}
+
+func UserItemSerializer(user *db.User) ([]byte, error) {
+	userCollection := newUserCollection(user)
+	return userCollectionSerializer(userCollection)
 }
 
 func userCollectionSerializer(collection utils.Collection) ([]byte, error) {
@@ -36,11 +34,25 @@ func userCollectionSerializer(collection utils.Collection) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func newUserCollection(userItems []*db.User, curPage int) (collection utils.Collection) {
+func newUserCollection(user *db.User) (collection utils.Collection) {
 	collection = utils.Collection{
 		Collection: utils.ItemsCollection{
 			Version:  utils.CollectionVersion,
-			Href:     href,
+			Href:     fmt.Sprintf("%s%s/", userConst.Href, user.Username),
+			Items:    serializeUserItems([]*db.User{user}),
+			Queries:  []utils.CollectionQuery{},
+			Links:    []utils.CollectionLink{},
+			Template: userCollectionTemplate(),
+		},
+	}
+	return
+}
+
+func newUsersCollection(userItems []*db.User, curPage int) (collection utils.Collection) {
+	collection = utils.Collection{
+		Collection: utils.ItemsCollection{
+			Version:  utils.CollectionVersion,
+			Href:     userConst.Href,
 			Items:    serializeUserItems(userItems),
 			Links:    userCollectionPaginationLinks(curPage),
 			Queries:  userCollectionQueries(),
@@ -52,7 +64,7 @@ func newUserCollection(userItems []*db.User, curPage int) (collection utils.Coll
 
 func serializeUserItems(userItems []*db.User) (serializedItems []utils.CollectionItem) {
 	for _, item := range userItems {
-		itemSlug := fmt.Sprintf(href+"%s/", item.Username)
+		itemSlug := fmt.Sprintf(userConst.Href+"%s/", item.Username)
 		serializedItems = append(serializedItems, utils.CollectionItem{
 			Href: itemSlug,
 			Data: []utils.DataField{
@@ -77,31 +89,47 @@ func serializeUserItems(userItems []*db.User) (serializedItems []utils.Collectio
 func userCollectionPaginationLinks(curPage int) (links []utils.CollectionLink) {
 	nextPageNum := curPage + 1
 	prevPageNum := curPage - 1
-	resultOffset := curPage * resultsPerPage
+	resultOffset := curPage * userConst.ResultsPerPage
 	isLastPage := hasReachedLastPage(resultOffset)
 
-	if curPage == firstPage && isLastPage {
+	if curPage == userConst.FirstPage && isLastPage {
 		return []utils.CollectionLink{}
-	} else if curPage == firstPage {
-		firstPageLink := utils.CollectionLink{Href: fmt.Sprintf(href+"page/%d/", nextPageNum), Rel: "next", Render: "link"}
+	} else if curPage == userConst.FirstPage {
+		firstPageLink := utils.CollectionLink{
+			Href:   fmt.Sprintf(userConst.Href+"page/%d/", nextPageNum),
+			Rel:    "next",
+			Render: "link",
+		}
 		links = append(links, firstPageLink)
 		return
 	}
 
 	if isLastPage {
-		lastPageLink := utils.CollectionLink{Href: fmt.Sprintf(href+"page/%d/", prevPageNum), Rel: "prev", Render: "link"}
+		lastPageLink := utils.CollectionLink{
+			Href:   fmt.Sprintf(userConst.Href+"page/%d/", prevPageNum),
+			Rel:    "prev",
+			Render: "link",
+		}
 		links = append(links, lastPageLink)
 		return
 	}
-	nextPageLink := utils.CollectionLink{Href: fmt.Sprintf(href+"page/%d/", nextPageNum), Rel: "next", Render: "link"}
-	prevPageLink := utils.CollectionLink{Href: fmt.Sprintf(href+"page/%d/", prevPageNum), Rel: "prev", Render: "link"}
+	nextPageLink := utils.CollectionLink{
+		Href:   fmt.Sprintf(userConst.Href+"page/%d/", nextPageNum),
+		Rel:    "next",
+		Render: "link",
+	}
+	prevPageLink := utils.CollectionLink{
+		Href:   fmt.Sprintf(userConst.Href+"page/%d/", prevPageNum),
+		Rel:    "prev",
+		Render: "link",
+	}
 	links = append(links, nextPageLink, prevPageLink)
 	return
 }
 
 func userCollectionQueries() (queries []utils.CollectionQuery) {
 	queries = []utils.CollectionQuery{
-		{href + "search/", "search", "search for user by username",
+		{userConst.Href + "search/", "search", "search for user by username",
 			[]utils.DataField{{"username", "username", ""}},
 		}}
 	return
@@ -110,6 +138,7 @@ func userCollectionQueries() (queries []utils.CollectionQuery) {
 func userCollectionTemplate() (userTemplate utils.ItemTemplate) {
 	userTemplate.Data = []utils.DataField{
 		{"username", "username", ""},
+		{"password", "password", ""},
 		{"first name", "fname", ""},
 		{"last name", "lname", ""},
 		{"email address", "email", ""},
